@@ -1,0 +1,178 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    author: test
+    product: test
+    version: test
+  
+  labels:
+    test: peer0
+  name: peer0
+spec:
+  type: ClusterIP 
+  ports:
+  - name: "7051"
+    port: 7051
+    targetPort: 7051
+    
+  - name: "7053"
+    port: 7053
+    targetPort: 7053
+
+  selector:
+    test: peer0
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    author: test
+    product: test
+    version: test
+  
+  labels:
+    test: peer0
+  name: peer0
+spec:
+  serviceName: peer0
+  replicas: 1
+  selector:
+    matchLabels:
+      test: peer0
+  template:
+    metadata:
+      
+      labels:
+        test: peer0
+    spec:
+      containers:
+      - args:
+        - peer
+        - node
+        - start
+        env:
+        - name: CORE_CHAINCODE_EXECUTETIMEOUT
+          value: 300s
+        - name: CORE_CHAINCODE_DEPLOYTIMEOUT
+          value: 300s
+        - name: CORE_LOGGING_LEVEL
+          value: WARNING
+        - name: CORE_PEER_GOSSIP_USELEADERELECTION
+          value: "true"
+        - name: CORE_PEER_GOSSIP_ORGLEADER
+          value: "false"
+        - name: CORE_PEER_GOSSIP_SKIPHANDSHAKE
+          value: "true"
+        - name: CORE_PEER_MSPCONFIGPATH
+          value: /etc/hyperledger/crypto/peer/msp
+        - name: CORE_PEER_TLS_ENABLED
+          value: "true"
+        - name: CORE_PEER_TLS_KEY_FILE
+          value: /etc/hyperledger/crypto/peer/tls/server.key
+        - name: CORE_PEER_TLS_CERT_FILE
+          value: /etc/hyperledger/crypto/peer/tls/server.crt
+        - name: CORE_PEER_TLS_ROOTCERT_FILE
+          value: /etc/hyperledger/crypto/peer/tls/ca.crt
+        - name: FABRIC_LOGGING_SPEC
+          value: WARNING
+        - name: ORDERER_GENERAL_LOGLEVEL
+          value: WARNING
+        - name: CORE_PEER_LOCALMSPID
+          value: orgMSP
+        - name: CORE_PEER_ID
+          value: peer0
+        - name: CORE_PEER_ADDRESS
+          value: peer0:7051
+        - name: CORE_PEER_LISTENADDRESS
+          value: 0.0.0.0:7051
+        - name: CORE_PEER_CHAINCODELISTENADDRESS
+          value: localhost:7052
+        - name: CORE_PEER_GOSSIP_BOOTSTRAP
+          value: peer0:7051
+        - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
+          value: peer0:7051
+        - name: CORE_LEDGER_STATE_STATEDATABASE
+          value: CouchDB
+        - name: CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS
+          value: couchdb:5984
+        - name: CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME
+          value: CouchDBUser
+        - name: CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+          value: Blockchain4ever
+        - name: CORE_METRICS_PROVIDER
+          value: prometheus
+        - name: CORE_OPERATIONS_LISTENADDRESS
+          value: 0.0.0.0:9443
+        - name: CORE_CHAINCODE_EXTERNALBUILDERS_PATH
+          value: /external-builder
+        - name: CORE_CHAINCODE_EXTERNALBUILDERS_NAME
+          value: externalbuilder
+        image: hyperledger/fabric-peer:2.1
+        name: peer0
+        ports:
+        - containerPort: 7051
+        - containerPort: 7053
+        volumeMounts:
+        - mountPath: /etc/hyperledger/crypto/peer/msp/cacerts/
+          name: peercacerts
+        - mountPath: /etc/hyperledger/crypto/peer/msp/keystore/
+          name: peerkeystore
+        - mountPath: /etc/hyperledger/crypto/peer/msp/signcerts/
+          name: peersigncerts
+        - mountPath: /etc/hyperledger/crypto/peer/msp/
+          name: peermsp
+        - mountPath: /etc/hyperledger/crypto/peer/tls/
+          name: peertls
+        - mountPath: /etc/hyperledger/fabric/core.yaml
+          name: coreyaml
+          subPath: core.yaml
+        - mountPath: /var/hyperledger/production
+          name: peer0-claim2
+        workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+      restartPolicy: Always
+      volumes:
+      - name: peercacerts
+        secret:
+          secretName: peer0.org1.example.com.msp.cacerts
+          items:
+          - key: ca.org1.example.com-cert.pem
+            path: ca.org1.example.com-cert.pem
+      - name: peerkeystore
+        secret:
+          secretName: peer0.org1.example.com.msp.keystore
+          items:
+          - key: priv_sk
+            path: priv_sk
+      - name: peersigncerts
+        secret:
+          secretName: peer0.org1.example.com.msp.signcerts
+          items:
+          - key: peer0.org1.example.com-cert.pem
+            path: peer0.org1.example.com-cert.pem
+      - name: peermsp
+        secret:
+          secretName: peer0.org1.example.com.msp
+          items:
+          - key: config.yaml
+            path: config.yaml
+      - name: peertls
+        secret:
+          secretName: peer0.org1.example.com.tls
+          items:
+          - key: ca.crt
+            path: ca.crt
+          - key: server.crt
+            path: server.crt
+          - key: server.key
+            path: server.key
+      - name: coreyaml
+        configMap:
+          name: configs
+          items:
+            - key: core.yaml
+              path: core.yaml
+      - name: peer0-claim2
+        persistentVolumeClaim:
+          claimName: peer-disk-claim

@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    author: test
+    product: test
+    version: test
+  labels:
+    test: couchdb
+  name: couchdb
+spec:
+  ports:
+  - name: "5984"
+    port: 5984
+    targetPort: 5984
+  selector:
+    test: couchdb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    author: test
+    product: test
+    version: test
+  labels:
+    test: couchdb
+  name: couchdb
+spec:
+  serviceName: couchdb
+  replicas: 1
+  selector:
+    matchLabels:
+      test: couchdb
+  template:
+    metadata:
+      labels:
+        test: couchdb
+    spec:
+      containers:
+      - env:
+        - name: COUCHDB_PASSWORD
+          value: Blockchain4ever
+        - name: COUCHDB_USER
+          value: CouchDBUser
+        image: hyperledger/fabric-couchdb:0.4
+        name: couchdb0
+        ports:
+        - containerPort: 5984
+        volumeMounts:
+        - mountPath: /opt/couchdb/data
+          name: couchdb-claim00
+      restartPolicy: Always
+      volumes:
+      - name: couchdb-claim00
+        persistentVolumeClaim:
+          claimName: couchdb-claim

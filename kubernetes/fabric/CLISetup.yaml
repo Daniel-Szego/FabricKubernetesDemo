@@ -1,0 +1,151 @@
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    author: test
+    product: test
+    version: test
+  
+  labels:
+    test: clisetup
+  name: clisetup
+spec:
+  serviceName: clisetup
+  replicas: 1
+  selector:
+    matchLabels:
+      test: clisetup
+  template:
+    metadata:
+      
+      labels:
+        test: clisetup
+    spec:
+      containers:
+      - args:
+        - /bin/bash
+        env:
+        - name: GOPATH
+          value: /opt/gopath
+        - name: FABRIC_LOGGING_SPEC
+          value: info
+        - name: CORE_PEER_ID
+          value: peer0
+        - name: CORE_PEER_ADDRESS
+          value: peer0:7051
+        - name: CORE_PEER_LOCALMSPID
+          value: Org1MSP
+        - name: CORE_PEER_TLS_ENABLED
+          value: "true"
+        - name: CORE_PEER_TLS_CERT_FILE
+          value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+        - name: CORE_PEER_TLS_KEY_FILE
+          value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
+        - name: CORE_PEER_TLS_ROOTCERT_FILE
+          value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+        - name: CORE_PEER_MSPCONFIGPATH
+          value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+        - name: CORE_CHAINCODE_KEEPALIVE
+          value: "10"
+        - name: FABRIC_CFG_PATH
+          value: /var/hyperledger/config
+        image: hyperledger/fabric-tools:2.2.1
+        name: clisetup
+        command: ["sh", "/setup/setup.sh"]
+        ports:
+        - containerPort: 7051
+        volumeMounts:
+        - mountPath: /etc/hyperledger/channel/
+          name: mainconfig
+        - mountPath: /etc/hyperledger/crypto/orderer/msp/
+          name: ordertlscacert
+        - mountPath: /setup/
+          name: setupconfig
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/
+          name: peertls
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/tlscacerts/
+          name: tlscacert
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/cacerts/
+          name: mspcacert
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/
+          name: mspkeystore
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/
+          name: mspsigncerts
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/
+          name: mspmsp  
+        - mountPath: /var/hyperledger/config/core.yaml
+          name: corecliyaml
+          subPath: core.yaml
+        workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+      restartPolicy: Always
+      volumes:
+      - name: mainconfig
+        secret:
+          secretName: allchannelconfigs
+          items:
+            - key: Org1MSPanchors.tx
+              path: Org1MSPanchors.tx
+            - key: channel.tx
+              path: channel.tx
+            - key: genesis.block
+              path: genesis.block
+      - name: setupconfig
+        configMap:
+          name: configs
+          items:
+            - key: setup.sh
+              path: setup.sh
+      - name: ordertlscacert
+        secret:
+          secretName: orderer.example.com.tls.ordertlscacert
+          items:
+          - key: tlsca.example.com-cert.pem
+            path: tlsca.example.com-cert.pem
+      - name: peertls
+        secret:
+          secretName: peer0.org1.example.com.tls
+          items:
+          - key: ca.crt
+            path: ca.crt
+          - key: server.crt
+            path: server.crt
+          - key: server.key
+            path: server.key
+      - name: mspcacert
+        secret:
+          secretName: admin.org1.example.com.msp.cacerts
+          items:
+          - key: ca.org1.example.com-cert.pem
+            path: ca.org1.example.com-cert.pem
+      - name: mspkeystore
+        secret:
+          secretName: admin.org1.example.com.msp.keystore
+          items:
+          - key: priv_sk
+            path: priv_sk
+      - name: mspsigncerts
+        secret:
+          secretName: admin.org1.example.com.msp.signcerts
+          items:
+          - key: Admin.org1.example.com-cert.pem
+            path: Admin.org1.example.com-cert.pem
+      - name: tlscacert
+        secret:
+          secretName: admin.org1.example.com.msp.tlscacerts
+          items:
+          - key: tlsca.org1.example.com-cert.pem
+            path: tlsca.org1.example.com-cert.pem
+      - name: mspmsp
+        secret:
+          secretName: admin.org1.example.com.msp
+          items:
+          - key: config.yaml
+            path: config.yaml
+      - name: corecliyaml
+        configMap:
+          name: configs
+          items:
+            - key: core.yaml
+              path: core.yaml
+
