@@ -2,7 +2,14 @@
 
 These scripts are for demonstration only, do yours own research and tests before using in production
 
-docker:
+FABRIC STRUCTURE:
+- 1 Organisation
+- 1 Peer
+- 1 node Ordering service
+- 1 CouchDB
+- 1 Setup container
+
+DOCKER:
 
  folders:
  - chaincode: marbles chaincode
@@ -15,7 +22,7 @@ docker:
  - start.sh - start the network
  - teardown.sh - delete the network (docker volumes might need to be deleted manually)
 
-kubernetes: 
+KUBERNETES: 
 
  folders:
  - chaincode: marbles chaincode
@@ -35,5 +42,3 @@ kubernetes:
  - start.sh - install the network
  - checking if the network setup is successful look at the set result of the setupjob  (like with kubectl logs <job-pod-name>)
  - teardown.sh - delete the network (some of the secrets and configs might need to be  deleted manually, like with kubectl delete secret)
-
-
