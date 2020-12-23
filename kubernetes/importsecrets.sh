@@ -7,7 +7,11 @@ kubectl create secret generic admin.org1.example.com.msp.cacerts --from-file=cry
 
 kubectl create secret generic admin.org1.example.com.msp.keystore --from-file=crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk -o yaml
 
-kubectl create secret generic admin.org1.example.com.msp.signcerts --from-file=crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin.org1.example.com-cert.pem -o yaml
+# rename @ to .
+
+mv crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin.org1.example.com-cert.pem
+
+kubectl create secret generic admin.org1.example.com.msp.signcerts --from-file="crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin.org1.example.com-cert.pem" -o yaml
 
 kubectl create secret generic admin.org1.example.com.msp --from-file=crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/ -o yaml
 
@@ -58,5 +62,10 @@ kubectl create secret generic genesis.block --from-file=config/genesis.block -o 
 kubectl create secret generic channel.tx --from-file=config/channel.tx -o yaml
 
 kubectl create secret generic orgmspanchors.tx --from-file=config/Org1MSPanchors.tx -o yaml
+
+# import chaincode files
+
+kubectl create configmap chaincode --from-file=chaincode/marbles/go/ -o yaml
+
 
 

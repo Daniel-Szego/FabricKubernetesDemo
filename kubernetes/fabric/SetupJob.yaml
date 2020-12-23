@@ -1,21 +1,16 @@
-
-apiVersion: apps/v1
-kind: StatefulSet
+apiVersion: batch/v1
+kind: Job
 metadata:
   annotations:
     author: test
     product: test
     version: test
-  
   labels:
     test: clisetup
-  name: clisetup
+  name: setupfabricjob
 spec:
-  serviceName: clisetup
-  replicas: 1
-  selector:
-    matchLabels:
-      test: clisetup
+  backoffLimit: 0
+spec:
   template:
     metadata:
       
@@ -50,6 +45,8 @@ spec:
           value: "10"
         - name: FABRIC_CFG_PATH
           value: /var/hyperledger/config
+        - name: CORE_VM_ENDPOINT
+          value: unix:///host/var/run/docker.sock
         image: hyperledger/fabric-tools:2.2.1
         name: clisetup
         command: ["sh", "/setup/setup.sh"]
@@ -73,12 +70,27 @@ spec:
         - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/
           name: mspsigncerts
         - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/
-          name: mspmsp  
+          name: mspmsp
+        - mountPath: /etc/hyperledger/crypto/peer/tls
+          name: peertls2
+        - mountPath: /chaincode/marbles/go/
+          name: emptyfolder  
+        - mountPath: /chaincode/marbles/go/go.mod
+          name: gomod
+          subPath: go.mod  
+        - mountPath: /chaincode/marbles/go/go.sum
+          name: gosum
+          subPath: go.sum
+        - mountPath: /chaincode/marbles/go/marbles_chaincode.go
+          name: marbleschaincodego
+          subPath: marbles_chaincode.go
         - mountPath: /var/hyperledger/config/core.yaml
           name: corecliyaml
           subPath: core.yaml
+        - mountPath: /host/var/run/
+          name: cli-claim0
         workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
-      restartPolicy: Always
+      restartPolicy: Never
       volumes:
       - name: mainconfig
         secret:
@@ -129,23 +141,52 @@ spec:
           secretName: admin.org1.example.com.msp.signcerts
           items:
           - key: Admin.org1.example.com-cert.pem
-            path: Admin.org1.example.com-cert.pem
+            path: Admin@org1.example.com-cert.pem
       - name: tlscacert
         secret:
           secretName: admin.org1.example.com.msp.tlscacerts
           items:
           - key: tlsca.org1.example.com-cert.pem
             path: tlsca.org1.example.com-cert.pem
+      - name: peertls2
+        secret:
+          secretName: peer0.org1.example.com.tls
+          items:
+          - key: ca.crt
+            path: ca.crt
       - name: mspmsp
         secret:
           secretName: admin.org1.example.com.msp
           items:
           - key: config.yaml
             path: config.yaml
+      - name: gomod
+        configMap:
+          name: chaincode
+          items:
+          - key: go.mod
+            path: go.mod
+      - name: gosum
+        configMap:
+          name: chaincode
+          items:
+          - key: go.sum
+            path: go.sum
+      - name: marbleschaincodego
+        configMap:
+          name: chaincode
+          items:
+          - key: marbles_chaincode.go
+            path: marbles_chaincode.go          
+      - name: emptyfolder
+        emptyDir: {}
       - name: corecliyaml
         configMap:
           name: configs
           items:
-            - key: core.yaml
-              path: core.yaml
+          - key: core.yaml
+            path: core.yaml
+      - name: cli-claim0
+        hostPath:
+          path: /var/run/
 

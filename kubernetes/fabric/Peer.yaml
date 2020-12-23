@@ -80,15 +80,15 @@ spec:
         - name: ORDERER_GENERAL_LOGLEVEL
           value: WARNING
         - name: CORE_PEER_LOCALMSPID
-          value: orgMSP
+          value: Org1MSP
         - name: CORE_PEER_ID
           value: peer0
         - name: CORE_PEER_ADDRESS
           value: peer0:7051
         - name: CORE_PEER_LISTENADDRESS
           value: 0.0.0.0:7051
-        - name: CORE_PEER_CHAINCODELISTENADDRESS
-          value: localhost:7052
+#        - name: CORE_PEER_CHAINCODELISTENADDRESS
+#          value: localhost:7052
         - name: CORE_PEER_GOSSIP_BOOTSTRAP
           value: peer0:7051
         - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
@@ -105,10 +105,10 @@ spec:
           value: prometheus
         - name: CORE_OPERATIONS_LISTENADDRESS
           value: 0.0.0.0:9443
-        - name: CORE_CHAINCODE_EXTERNALBUILDERS_PATH
-          value: /external-builder
-        - name: CORE_CHAINCODE_EXTERNALBUILDERS_NAME
-          value: externalbuilder
+        - name: CORE_VM_ENDPOINT
+          value: unix:///host/var/run/docker.sock
+        - name: CORE_PEER_ADDRESSAUTODETECT
+          value: "true"
         image: hyperledger/fabric-peer:2.1
         name: peer0
         ports:
@@ -130,6 +130,8 @@ spec:
           subPath: core.yaml
         - mountPath: /var/hyperledger/production
           name: peer0-claim2
+        - mountPath: /host/var/run/
+          name: cli-claim0
         workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
       restartPolicy: Always
       volumes:
@@ -176,3 +178,6 @@ spec:
       - name: peer0-claim2
         persistentVolumeClaim:
           claimName: peer-disk-claim
+      - name: cli-claim0
+        hostPath:
+          path: /var/run/
