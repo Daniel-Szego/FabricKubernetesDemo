@@ -10,6 +10,8 @@ export PATH=$GOPATH/src/github.com/hyperledger/fabric/build/bin:${PWD}/../bin:${
 export FABRIC_CFG_PATH=${PWD}
 CHANNEL_NAME=prodchannel
 
+# openssl x509 -in acs.cdroutertest.com.pem -text
+
 
 echo
 echo " ____    _____      _      ____    _____ "
