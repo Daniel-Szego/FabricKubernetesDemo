@@ -6,6 +6,8 @@ volumes:
   orderer-vm:
   peer-vm:
   couchdb:
+  explorerdb-vm:
+  explorer-vm:
 
 networks:
   dev-net:
@@ -30,9 +32,9 @@ services:
       - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
       - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
       - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_LISTENPORT=7050
       - ORDERER_METRICS_PROVIDER=prometheus
       - ORDERER_OPERATIONS_LISTENADDRESS=0.0.0.0:8443
-      - ORDERER_GENERAL_LISTENPORT=7050
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderers
     command: orderer
     ports:
@@ -75,13 +77,11 @@ services:
       - CORE_PEER_CHAINCODELISTENADDRESS=peer0.org1.example.com:7052
       - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
-
-      # - CORE_OPERATIONS_LISTENADDRESS=0.0.0.0:9440
-
       - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
       - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb:5984
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=DevCouchDB
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=Blockchain4ever
+      - CORE_OPERATIONS_LISTENADDRESS=0.0.0.0:9443
       - CORE_METRICS_PROVIDER=prometheus
 
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
@@ -90,6 +90,7 @@ services:
     ports:
       - 7051:7051
       - 7053:7053
+      - 9443:9443
     volumes:
         - /var/run/:/host/var/run/
         - ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp:/etc/hyperledger/crypto/peer/msp
@@ -152,3 +153,48 @@ services:
       - orderer.example.com
       - peer0.org1.example.com
       - couchdb
+
+  explorerdb:
+    image: hyperledger/explorer-db:1.1.3
+    container_name: explorerdb
+    hostname: explorerdb
+    environment:
+      - DATABASE_DATABASE=fabricexplorer
+      - DATABASE_USERNAME=hppoc
+      - DATABASE_PASSWORD=Blockchain4ever
+    healthcheck:
+      test: "pg_isready -h localhost -p 5432 -q -U postgres"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - explorerdb-vm:/var/lib/postgresql/data
+    networks:
+      - dev-net
+
+  explorer:
+    image: hyperledger/explorer:1.1.6
+    container_name: explorer
+    hostname: explorer
+    environment:
+      - DATABASE_HOST=explorerdb
+      - DATABASE_DATABASE=fabricexplorer
+      - DATABASE_USERNAME=hppoc
+      - DATABASE_PASSWD=Blockchain4ever
+      - LOG_LEVEL_APP=debug
+      - LOG_LEVEL_DB=debug
+      - LOG_LEVEL_CONSOLE=debug
+      - LOG_CONSOLE_STDOUT=true
+      - DISCOVERY_AS_LOCALHOST=false
+    volumes:
+      - ./explorer/config.json:/opt/explorer/app/platform/fabric/config.json
+      - ./explorer/connection-profile:/opt/explorer/app/platform/fabric/connection-profile/
+      - ./crypto-config/:/tmp/crypto/
+      -  explorer-vm:/opt/explorer/wallet
+    ports:
+      - 8080:8080
+    depends_on:
+      - peer0.org1.example.com
+      - orderer.example.com
+    networks:
+      - dev-net

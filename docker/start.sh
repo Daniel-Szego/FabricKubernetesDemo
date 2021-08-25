@@ -39,7 +39,11 @@ echo "##########################################################"
 docker-compose -f docker-compose.yml down
 
 # Starting hyperledger fabricchannel
-docker-compose -f docker-compose.yml up -d orderer.example.com peer0.org1.example.com couchdb cli-setup
+docker-compose -f docker-compose.yml up -d \
+orderer.example.com \
+peer0.org1.example.com \
+couchdb \
+cli-setup
 
 # wait for Hyperledger Fabric to start
 # incase of errors when running later commands, issue export FABRIC_START_TIMEOUT=<larger number>
@@ -186,6 +190,22 @@ peer chaincode query -C devchannel -n marbles -c '{"Args":["readMarble","marble1
 
 echo "##########################################################"
 echo "##### Network is finishing #########"
+echo "##########################################################"
+
+echo "##########################################################"
+echo "##### Start monitoring tools #########"
+echo "##########################################################"
+
+
+echo "##### explorerdb #########"
+docker-compose -f docker-compose.yml up -d explorerdb
+
+echo "##### explorer #########"
+docker-compose -f docker-compose.yml up -d explorer
+
+
+echo "##########################################################"
+echo "##### End start monitoring tools #########"
 echo "##########################################################"
 
 echo

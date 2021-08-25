@@ -1,0 +1,10 @@
+{
+	"network-configs": {
+		"demonetwork": {
+			"name": "demo-network",
+			"profile": "./connection-profile/demo.json"
+		}
+	},
+        "configtxgenToolPath":"/home/kp/Desktop/bct/fabric-samples/bin/",
+	"license": "Apache-2.0"
+}
