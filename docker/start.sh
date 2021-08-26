@@ -203,6 +203,8 @@ docker-compose -f docker-compose.yml up -d explorerdb
 echo "##### explorer #########"
 docker-compose -f docker-compose.yml up -d explorer
 
+echo "##### prometheus and grafana #########"
+docker-compose -f docker-compose.yml up -d prometheus grafana
 
 echo "##########################################################"
 echo "##### End start monitoring tools #########"

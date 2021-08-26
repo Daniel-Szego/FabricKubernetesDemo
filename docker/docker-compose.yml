@@ -8,6 +8,8 @@ volumes:
   couchdb:
   explorerdb-vm:
   explorer-vm:
+  prometheus-vm:
+  granafa-vm:
 
 networks:
   dev-net:
@@ -196,5 +198,26 @@ services:
     depends_on:
       - peer0.org1.example.com
       - orderer.example.com
+    networks:
+      - dev-net
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-vm:/prometheus
+    ports:
+      - 9090:9090
+    networks:
+      - dev-net
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    volumes:
+      - granafa-vm:/var/lib/grafana
+    ports:
+    - 3000:3000
     networks:
       - dev-net
