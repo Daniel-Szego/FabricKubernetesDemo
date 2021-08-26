@@ -47,8 +47,14 @@ services:
         - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp
         - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls:/var/hyperledger/orderer/tls
         - orderer-vm:/var/hyperledger/production/orderer
+    depends_on:
+      - logger
     networks:
       - dev-net
+    logging:
+      driver: fluentd
+      options:
+        tag: docker.{{.ID}}
 
   peer0.org1.example.com:
     container_name: peer0.org1.example.com
@@ -103,8 +109,13 @@ services:
     depends_on:
       - orderer.example.com
       - couchdb
+      - logger
     networks:
       - dev-net
+    logging:
+      driver: fluentd
+      options:
+        tag: docker.{{.ID}}
 
   couchdb:
     container_name: couchdb
@@ -221,3 +232,15 @@ services:
     - 3000:3000
     networks:
       - dev-net
+
+  logger:
+    container_name: fluentd
+    image: dvladnik/fluentd-ui
+    ports:
+      - "24224:24224"
+      - "9292:9292"  
+    volumes:
+      - ./fluentd/log:/fluentd/log
+      - ./fluentd/:/fluentd/etc
+    environment:
+      FLUENTD_CONF: fluentd.conf  

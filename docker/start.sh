@@ -43,7 +43,8 @@ docker-compose -f docker-compose.yml up -d \
 orderer.example.com \
 peer0.org1.example.com \
 couchdb \
-cli-setup
+cli-setup \
+logger
 
 # wait for Hyperledger Fabric to start
 # incase of errors when running later commands, issue export FABRIC_START_TIMEOUT=<larger number>
@@ -205,6 +206,12 @@ docker-compose -f docker-compose.yml up -d explorer
 
 echo "##### prometheus and grafana #########"
 docker-compose -f docker-compose.yml up -d prometheus grafana
+
+echo "##### start ELK #########"
+#docker-compose -f docker-compose.yml up -d elasticsearch logstash kibana
+
+echo "##### start flutned #########"
+#docker-compose -f docker-compose.yml up -d logger
 
 echo "##########################################################"
 echo "##### End start monitoring tools #########"

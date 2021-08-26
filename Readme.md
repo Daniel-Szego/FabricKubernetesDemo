@@ -22,6 +22,14 @@ DOCKER:
  - start.sh - start the network
  - teardown.sh - delete the network (docker volumes might need to be deleted manually)
 
+explorer: http://localhost:8080
+prometheus: http://localhost:9090
+grafana: http://localhost:3000 (admin / admin)
+kibana: http://localhost:5601
+elasctisearch: http://localhost:9200
+logtash: http://localhost:9600  
+fluentd: http://localhost:9292 (username="admin" and password="changeme")
+
 KUBERNETES: 
 
  folders:
