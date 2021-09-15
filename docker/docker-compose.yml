@@ -159,7 +159,7 @@ services:
         - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
         - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/etc/hyperledger/crypto/orderer/msp
         - ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls:/etc/hyperledger/crypto/peer/tls
-
+        - ./privdatacollection/:/privdatacollection/
     networks:
       - dev-net
     depends_on:

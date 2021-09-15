@@ -97,8 +97,8 @@ echo ""
 echo "##### Package chaincode #########"
 echo ""
 
-docker exec cli-setup peer lifecycle chaincode package marbles.tar.gz \
---path /chaincode/marbles/go --label marbles \
+docker exec cli-setup peer lifecycle chaincode package test.tar.gz \
+--path /chaincode/test/go --label test \
 --tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem
 
 
@@ -107,7 +107,7 @@ echo "##### Install chaincode #########"
 echo ""
 
 docker exec cli-setup \
-peer lifecycle chaincode install marbles.tar.gz \
+peer lifecycle chaincode install test.tar.gz \
 --tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem
 
 echo ""
@@ -117,13 +117,17 @@ echo ""
 docker exec cli-setup \
 peer lifecycle chaincode queryinstalled
 
+package_id=$(docker exec cli-setup peer lifecycle chaincode queryinstalled | grep 'Package ID' | sed 's/Package ID:* //' | sed 's/,.*//')
+echo ${package_id}
+
 echo ""
 echo "##### Approve chaincode for org #########"
 echo ""
 
 docker exec cli-setup \
-peer lifecycle chaincode approveformyorg --channelID devchannel --name marbles --version 1.0 --init-required --package-id marbles:78a2f9b1b1518055acf6248f0533095ecabaca6caacacc696fd56325226d6519 --sequence 1 \
+peer lifecycle chaincode approveformyorg --channelID devchannel --name test --version 1.0 --init-required --package-id ${package_id} --sequence 1 \
 -o orderer.example.com:7050 \
+--collections-config /privdatacollection/privdatacollection.json \
 --tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem
 
 echo ""
@@ -131,8 +135,9 @@ echo "##### Check commit readiness #########"
 echo ""
 
 docker exec cli-setup \
-peer lifecycle chaincode checkcommitreadiness --channelID devchannel --name marbles --version 1.0 --init-required --sequence 1 \
+peer lifecycle chaincode checkcommitreadiness --channelID devchannel --name test --version 1.0 --init-required --sequence 1 \
 -o orderer.example.com:7050 \
+--collections-config /privdatacollection/privdatacollection.json \
 --tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem
 
 echo ""
@@ -143,7 +148,8 @@ echo ""
 docker exec cli-setup \
 peer lifecycle chaincode commit \
 -o orderer.example.com:7050 \
---channelID devchannel --name marbles --version 1.0 --sequence 1 --init-required \
+--channelID devchannel --name test --version 1.0 --sequence 1 --init-required \
+--collections-config /privdatacollection/privdatacollection.json \
 --tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem \
 --peerAddresses peer0.org1.example.com:7051 \
 --tlsRootCertFiles /etc/hyperledger/crypto/peer/tls/ca.crt
@@ -151,7 +157,7 @@ peer lifecycle chaincode commit \
 
 docker exec cli-setup \
 peer lifecycle chaincode querycommitted  \
---channelID devchannel --name marbles \
+--channelID devchannel --name test \
 --tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem
 
 echo ""
@@ -162,31 +168,76 @@ docker exec cli-setup \
 peer chaincode invoke \
 -o orderer.example.com:7050 \
 --tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem \
--C devchannel -n marbles  \
+-C devchannel -n test  \
 --peerAddresses peer0.org1.example.com:7051 \
 --tlsRootCertFiles /etc/hyperledger/crypto/peer/tls/ca.crt \
 -c '{"Args":[]}' --isInit --waitForEvent
 
 
 echo ""
-echo "##### Test transactions - init marbles #########"
+echo "##### Test transactions - normal #########"
 echo ""
 
 docker exec cli-setup \
 peer chaincode invoke \
 -o orderer.example.com:7050 \
 --tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem \
--C devchannel -n marbles \
+-C devchannel -n test \
 --peerAddresses peer0.org1.example.com:7051 \
 --tlsRootCertFiles /etc/hyperledger/crypto/peer/tls/ca.crt \
--c '{"Args":["initMarble","marble1","blue","35","tom"]}' --waitForEvent
+-c '{"Args":["SaveData","id1","data1"]}' --waitForEvent
 
 echo ""
-echo "##### Query chaincode after first aid #########"
+echo "##### Query chaincode after normal #########"
 echo ""
 
 docker exec cli-setup \
-peer chaincode query -C devchannel -n marbles -c '{"Args":["readMarble","marble1"]}'
+peer chaincode query -C devchannel -n test -c '{"Args":["ReadData","id1"]}'
+
+
+echo ""
+echo "##### Test transactions - private data #########"
+echo ""
+
+docker exec cli-setup \
+peer chaincode invoke \
+-o orderer.example.com:7050 \
+--tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem \
+-C devchannel -n test \
+--peerAddresses peer0.org1.example.com:7051 \
+--tlsRootCertFiles /etc/hyperledger/crypto/peer/tls/ca.crt \
+-c '{"Args":["SavePrivData","id1","data1"]}' --waitForEvent
+
+echo ""
+echo "##### Query chaincode private data #########"
+echo ""
+
+docker exec cli-setup \
+peer chaincode query -C devchannel -n test -c '{"Args":["GetPrivData","id1"]}'
+
+echo ""
+echo "##### Test transactions - tranisent field and private data #########"
+echo ""
+
+export testTrasient=$(echo -n "test transient data" | base64 | tr -d \\n)
+
+docker exec cli-setup \
+peer chaincode invoke \
+-o orderer.example.com:7050 \
+--tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem \
+-C devchannel -n test \
+--peerAddresses peer0.org1.example.com:7051 \
+--tlsRootCertFiles /etc/hyperledger/crypto/peer/tls/ca.crt \
+-c '{"Args":["SavePrivDataTransient","id2"]}' \
+--transient "{\"data\":\"$testTrasient\"}" \
+--waitForEvent
+
+echo ""
+echo "##### Query chaincode private data for transient #########"
+echo ""
+
+docker exec cli-setup \
+peer chaincode query -C devchannel -n test -c '{"Args":["GetPrivData","id2"]}'
 
 
 echo "##########################################################"
