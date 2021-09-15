@@ -32,6 +32,8 @@ CHANNEL_NAME=devchannel
 chmod -R 0755 ./crypto-config
 rm -fr config/*
 rm -fr crypto-config/*
+rm -fr idemix-config/*
+
 
 # generate crypto material
 cryptogen generate --config=./crypto-config.yaml
@@ -39,6 +41,13 @@ if [ "$?" -ne 0 ]; then
   echo "Failed to generate crypto material..."
   exit 1
 fi
+
+#generate idemix certificate and crypto material
+idemixgen ca-keygen --output crypto-config/peerOrganizations/org1.example.com/idemix-config
+
+#signer config
+idemixgen signerconfig -u MNBIdemix --admin -e "idemixadmin" -r 1234 --output crypto-config/peerOrganizations/org1.example.com/idemix-config
+
 
 # generate genesis block for orderer
 configtxgen -profile OrdererGenesis -channelID sys-channel -outputBlock ./config/genesis.block

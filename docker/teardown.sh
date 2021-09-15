@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -e
 
+
+
 docker-compose -f docker-compose.yml down
 
 # Shut down the Docker containers for the system tests.
@@ -8,6 +10,11 @@ docker-compose -f docker-compose.yml kill && docker-compose -f docker-compose.ym
 
 # remove the local state
 rm -f ~/.hfc-key-store/*
+
+chmod -R 0755 ./crypto-config
+rm -fr config/*
+rm -fr crypto-config/*
+rm -fr idemix-config/*
 
 # remove chaincode docker images
 docker rm $(docker ps -aq)

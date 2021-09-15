@@ -167,6 +167,44 @@ services:
       - peer0.org1.example.com
       - couchdb
 
+  cli-idemix:
+    container_name: cli-idemix
+    image: hyperledger/fabric-tools:2.2.1
+    tty: true
+    dns_search: .
+    environment:
+      - GOPATH=/opt/gopath
+      - FABRIC_LOGGING_SPEC=info
+      - CORE_PEER_ID=cli
+      - CORE_PEER_LOCALMSPTYPE=idemix
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_LOCALMSPID=org1idemixMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/idemix-config/
+      - CORE_CHAINCODE_KEEPALIVE=10
+      - FABRIC_CFG_PATH=/var/hyperledger/config
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - ./config/:/etc/hyperledger/channel/
+        - ./chaincode:/chaincode
+        - ./core/:/var/hyperledger/config
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/etc/hyperledger/crypto/orderer/msp
+        - ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls:/etc/hyperledger/crypto/peer/tls
+        - ./privdatacollection/:/privdatacollection/
+        - ./crypto-config/peerOrganizations/org1.example.com/idemix-config/:/idemix-config/
+    networks:
+      - dev-net
+    depends_on:
+      - orderer.example.com
+      - peer0.org1.example.com
+      - couchdb
+
+
   explorerdb:
     image: hyperledger/explorer-db:1.1.3
     container_name: explorerdb

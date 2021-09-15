@@ -70,6 +70,38 @@ Organizations:
             - Host: peer0.org1.example.com
               Port: 7051
 
+    - &Org1Idemix
+        # defaultorg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+        name: org1idemixMSP
+
+        # id to load the msp definition as
+        id: org1idemixMSP
+
+        msptype: idemix
+        mspdir: crypto-config/peerOrganizations/org1.example.com/idemix-config
+
+        Policies:
+          Readers:
+            Type: Signature
+            Rule: "OR('org1idemixMSP.member')"
+            # If your MSP is configured with the new NodeOUs, you might
+            # want to use a more specific rule like the following:
+            # Rule: "OR('SampleOrg.admin', 'SampleOrg.peer', 'SampleOrg.client')"
+          Writers:
+            Type: Signature
+            Rule: "OR('org1idemixMSP.member')"
+            # If your MSP is configured with the new NodeOUs, you might
+            # want to use a more specific rule like the following:
+            # Rule: "OR('SampleOrg.admin', 'SampleOrg.client')"
+          Admins:
+            Type: Signature
+            Rule: "OR('org1idemixMSP.admin')"
+          Endorsement:
+            Type: Signature
+            Rule: "OR('org1idemixMSP.member')"
+
+
 ################################################################################
 #
 #   SECTION: Capabilities
@@ -154,11 +186,11 @@ Application: &ApplicationDefaults
             Type: ImplicitMeta
             Rule: "MAJORITY Admins"
         LifecycleEndorsement:
-            Type: ImplicitMeta
-            Rule: "MAJORITY Endorsement"
+            Type: Signature
+            Rule: "OR('Org1MSP.member')"
         Endorsement:
-            Type: ImplicitMeta
-            Rule: "MAJORITY Endorsement"
+            Type: Signature
+            Rule: "OR('Org1MSP.member')"
 
     Capabilities:
         <<: *ApplicationCapabilities
@@ -275,6 +307,7 @@ Profiles:
             <<: *ApplicationDefaults
             Organizations:
                 - *Org1
+                - *Org1Idemix
             Capabilities:
                 <<: *ApplicationCapabilities
 
@@ -302,3 +335,4 @@ Profiles:
             SampleConsortium:
                 Organizations:
                 - *Org1
+                - *Org1Idemix

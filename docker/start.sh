@@ -44,7 +44,8 @@ orderer.example.com \
 peer0.org1.example.com \
 couchdb \
 cli-setup \
-logger
+logger \
+cli-idemix
 
 # wait for Hyperledger Fabric to start
 # incase of errors when running later commands, issue export FABRIC_START_TIMEOUT=<larger number>
@@ -238,6 +239,20 @@ echo ""
 
 docker exec cli-setup \
 peer chaincode query -C devchannel -n test -c '{"Args":["GetPrivData","id2"]}'
+
+
+echo ""
+echo "##### Test transactions - Idemix#########"
+echo ""
+
+docker exec cli-idemix \
+peer chaincode invoke \
+-o orderer.example.com:7050 \
+--tls --cafile /etc/hyperledger/crypto/orderer/msp/tlscacerts/tlsca.example.com-cert.pem \
+-C devchannel -n test \
+--peerAddresses peer0.org1.example.com:7051 \
+--tlsRootCertFiles /etc/hyperledger/crypto/peer/tls/ca.crt \
+-c '{"Args":["SaveData","id1","data1"]}' --waitForEvent
 
 
 echo "##########################################################"
